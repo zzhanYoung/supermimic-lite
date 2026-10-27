@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ty_cache/
+build/
+dist/
+*.egg-info/
+checkpoints/
+logs/
+motions/
+wandb/
+MUJOCO_LOG.TXT
+.supermimic.local.toml
+.migration-inventory.json
+.supermimic.plot.local.json

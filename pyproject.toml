@@ -1,0 +1,156 @@
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"
+
+[project]
+name = "supermimic-lite"
+version = "0.1.0"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE.md"]
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [
+  {name = "SuperMimic Lite contributors"},
+]
+keywords = ["mujoco", "mujoco-warp", "simulation", "reinforcement-learning", "robotics"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
+  "Typing :: Typed",
+  "Environment :: GPU :: NVIDIA CUDA",
+  "Topic :: Scientific/Engineering",
+  "Natural Language :: English",
+]
+description = "Standalone SuperMimic motion tracking for Unitree G1, powered by mjlab."
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "mjlab @ git+https://github.com/mujocolab/mjlab.git@b517e0c489139e7fcee95702cfb2b01931264985",
+  "pyyaml",
+  "prettytable",
+  "tqdm",
+  "tyro>=1.0.1",
+  "torch>=2.7.0",
+  "torchrunx>=0.3.4",
+  "warp-lang>=1.14.0",
+  "mujoco-warp~=3.11.0",
+  "mujoco~=3.11.0",
+  "trimesh>=4.8.3",
+  "scipy>=1.15",
+  "viser>=1.0.27",
+  "mjviser>=0.0.14",
+  "mediapy>=1.2.7",
+  "numpy",
+  "imageio-ffmpeg",
+  "matplotlib>=3.8",
+  "tensordict",
+  "rsl-rl-lib==5.5.0",
+  "tensorboard>=2.20.0",
+  "onnxscript>=0.5.4",
+  "wandb>=0.22.3,<0.29",
+]
+
+[project.scripts]
+supermimic = "supermimic.cli:main"
+
+[tool.uv.build-backend]
+module-name = "supermimic"
+source-include = ["uv.lock", "docs/**", "tests/**", "typings/**", "Makefile", "assets.example.toml", ".python-version"]
+
+[dependency-groups]
+dev = [
+  "ipdb>=0.13.13",
+  "pre-commit>=4.3.0",
+  "pyright>=1.1.408",
+  "onnxruntime>=1.19.0; python_version >= '3.11'",
+  "pytest>=v9.0.3",
+  "ruff>=0.16.1",
+  "ty>=v0.0.14",
+]
+
+[project.optional-dependencies]
+cu128 = ["torch>=2.7.0"]
+cpu = ["torch>=2.7.0"]
+
+[tool.uv]
+conflicts = [
+  [{extra = "cu128"}, {extra = "cpu"}],
+]
+constraint-dependencies = [
+  "GitPython>=3.1.57",
+  "lxml>=6.1.0",
+]
+required-environments = [
+  "sys_platform == 'darwin' and platform_machine == 'arm64'",
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com/"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+warp-lang = { index = "nvidia", marker = "sys_platform != 'darwin'" }
+torch = [
+  { index = "pytorch-cu128", extra = "cu128", marker = "sys_platform != 'darwin'" },
+  { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform != 'darwin'" },
+]
+
+[tool.ruff]
+src = ["src"]  # Helpful for recognizing first-party imports.
+indent-width = 2
+exclude = [
+  "typings",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
+ignore = ["B011"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+venvPath = "."
+venv = ".venv"
+stubPath = "typings"
+ignore = ["./docs"]
+
+
+
+[tool.ty.environment]
+extra-paths = ["typings"]
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+
+[tool.pytest.ini_options]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+addopts = "--strict-markers"
+filterwarnings = [
+  # MuJoCo Warp warns that MULTICCD (enabled by default) generates at most one
+  # contact for CCD pairs it lacks multicontact support for (e.g. cylinder-box,
+  # hfield-capsule). Test fixtures aren't validating contact fidelity for these
+  # pairs, so silence the expected noise.
+  "ignore:MULTICCD is enabled, but the scene contains CCD pairs:UserWarning",
+]

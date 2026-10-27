@@ -1,0 +1,6 @@
+# Copy to .supermimic.local.toml; paths are relative to that file.
+motion_folder = "motions/lafan1_g1_rtgt_50hz"
+checkpoint = "checkpoints/lafan1_supermimic/model_5000.pt"
+run_dir = "checkpoints/lafan1_supermimic"
+plot_sources = ["checkpoints/lafan1_supermimic"]
+protected_roots = ["checkpoints/lafan1_supermimic", "motions"]
