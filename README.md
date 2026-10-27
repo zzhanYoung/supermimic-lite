@@ -1,5 +1,7 @@
 # SuperMimic Lite
 
+**English** | [简体中文](README.zh-CN.md)
+
 An **unofficial reproduction of SuperMimic** for Unitree G1 motion tracking, built on [mjlab](https://github.com/mujocolab/mjlab) and MuJoCo Warp. It learns a dynamics model from simulator transitions and trains a policy through imagined rollouts.
 
 This repository has received **only basic testing on LAFAN1**, hence **Lite**. Reward terms, weights and other training settings differ from the original paper. The results below describe this implementation and do not reproduce the paper's experimental setup.

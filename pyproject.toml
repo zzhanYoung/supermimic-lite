@@ -59,7 +59,7 @@ supermimic = "supermimic.cli:main"
 
 [tool.uv.build-backend]
 module-name = "supermimic"
-source-include = ["uv.lock", "docs/results/lafan1_train-time.png", "docs/results/lafan1_real-steps.png", "tests/**", "scripts/**", "Makefile", "assets.example.toml", ".python-version"]
+source-include = ["README.zh-CN.md", "uv.lock", "docs/results/lafan1_train-time.png", "docs/results/lafan1_real-steps.png", "tests/**", "scripts/**", "Makefile", "assets.example.toml", ".python-version"]
 
 [dependency-groups]
 dev = [
