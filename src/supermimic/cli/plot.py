@@ -70,7 +70,7 @@ COMPARISON_PANELS = (
     "Train/mean_episode_length",
   ),
   Panel(
-    "Failure fraction (different windows)",
+    "Failure fraction",
     "Failed episodes (%)",
     (FAILURE,),
     "PPO: Metrics/motion/adaptive_failure_rate\nSM: Loss/episode/failure_fraction",
@@ -80,18 +80,6 @@ COMPARISON_PANELS = (
     "Mean body position error (m)",
     ("Metrics/motion/error_body_pos",),
     "Metrics/motion/error_body_pos",
-  ),
-  Panel(
-    "Real sampling throughput",
-    "Real transitions / second",
-    ("Perf/total_fps",),
-    "Perf/total_fps (collection + learning)",
-  ),
-  Panel(
-    "Learning time share",
-    "Learning / total iteration time (%)",
-    (LEARNING_SHARE,),
-    "Perf/learning_time / (collection_time + learning_time)",
   ),
 )
 SUPERMIMIC_PANELS = (
@@ -135,7 +123,7 @@ SUPERMIMIC_PANELS = (
 PANEL_GROUPS = {"comparison": COMPARISON_PANELS, "supermimic": SUPERMIMIC_PANELS}
 METRIC_TAGS = tuple(
   tag for panels in PANEL_GROUPS.values() for panel in panels for tag in panel.tags
-)
+) + ("Perf/total_fps", LEARNING_SHARE)
 CAPTURE_TAGS = tuple(
   dict.fromkeys(
     (
@@ -280,6 +268,14 @@ def read_sources(sources: list[Source]) -> list[Run]:
       raise ValueError(f"{source.path}: no supported training metrics recorded")
     for run in group:
       run.metadata.update(source.metadata)
+      max_iteration = run.metadata.get("max_iteration")
+      if max_iteration is not None:
+        if type(max_iteration) is not int or max_iteration < 0:
+          raise ValueError(f"{run.name}: max_iteration must be a nonnegative integer")
+        run.samples = {
+          tag: [sample for sample in samples if sample.step <= max_iteration]
+          for tag, samples in run.samples.items()
+        }
       if run.algorithm == "unknown":
         if any(
           tag.startswith(("Loss/world_model/", "Loss/actor/")) for tag in run.samples
@@ -606,12 +602,31 @@ def summarize(
   return panels
 
 
+def comparison_label(run: Run) -> str:
+  details = []
+  for axis in ("train-time", "real-steps"):
+    try:
+      values, warnings = axis_values(run, axis)
+    except ValueError:
+      continue
+    if warnings:
+      continue
+    last = values[max(values)]
+    if axis == "train-time":
+      details.append(f"{last:,.1f} min")
+    else:
+      steps = f"{last / 1000:,.2f}B" if last >= 1000 else f"{last:,.1f}M"
+      details.append(f"{steps} real steps")
+  return run.label + ("\n" + " | ".join(details) if details else "")
+
+
 def render_figure(runs: list[Run], curves: dict, summary: dict, title: str) -> Figure:
   panels = PANEL_GROUPS[summary["report"]]
+  comparison = summary["report"] == "comparison"
   axis = summary["x_axis"]
   style = {
     "font.family": "DejaVu Sans",
-    "font.size": 10,
+    "font.size": 15 if comparison else 10,
     "text.color": "#1D3045",
     "axes.labelcolor": "#40536A",
     "axes.edgecolor": "#CAD5DF",
@@ -633,37 +648,61 @@ def render_figure(runs: list[Run], curves: dict, summary: dict, title: str) -> F
   xmin = min(float(x.min()) for x in coordinates)
   xmax = max(float(x.max()) for x in coordinates)
   with plt.rc_context(style):  # pyright: ignore[reportArgumentType]
-    fig, axes = plt.subplots(2, 3, figsize=(19, 12))
+    fig, axes = plt.subplots(
+      2, 2 if comparison else 3, figsize=(16, 11) if comparison else (19, 12)
+    )
     fig.subplots_adjust(
-      left=0.065, right=0.98, bottom=0.25, top=0.78, hspace=0.78, wspace=0.30
+      left=0.09 if comparison else 0.065,
+      right=0.975 if comparison else 0.98,
+      bottom=0.09 if comparison else 0.25,
+      top=0.78,
+      hspace=0.48 if comparison else 0.78,
+      wspace=0.28 if comparison else 0.30,
     )
-    fig.suptitle(title, x=0.065, y=0.965, ha="left", fontsize=24, weight="bold")
-    fig.text(
-      0.065,
-      0.92,
-      f"{AXES[axis]}{' | logarithmic x-axis' if axis == 'real-steps' else ''}"
-      f"  |  Snapshot {summary['snapshot_created_utc'][:19]} UTC",
-      color="#53667B",
+    fig.suptitle(
+      title,
+      x=0.5 if comparison else 0.065,
+      y=0.965,
+      ha="center" if comparison else "left",
+      fontsize=28 if comparison else 24,
+      weight="bold",
     )
+    if not comparison:
+      fig.text(
+        0.065,
+        0.92,
+        f"{AXES[axis]}{' | logarithmic x-axis' if axis == 'real-steps' else ''}"
+        f"  |  Snapshot {summary['snapshot_created_utc'][:19]} UTC",
+        color="#53667B",
+      )
     fig.legend(
-      [Line2D([0], [0], color=summary["colors"][r.name], lw=2.5) for r in runs],
-      [r.label for r in runs],
-      loc="upper left",
-      bbox_to_anchor=(0.06, 0.895),
+      [
+        Line2D([0], [0], color=summary["colors"][r.name], lw=3 if comparison else 2.5)
+        for r in runs
+      ],
+      [comparison_label(r) if comparison else r.label for r in runs],
+      loc="upper center" if comparison else "upper left",
+      bbox_to_anchor=(0.5, 0.91) if comparison else (0.06, 0.895),
       ncol=min(3, len(runs)),
-      fontsize=11,
+      fontsize=15 if comparison else 11,
     )
     for ax, panel in zip(axes.flat, panels, strict=True):
-      ax.set_title(panel.title, loc="left", fontsize=12.5, pad=36)
-      ax.text(
-        0,
-        1.035,
-        panel.caption,
-        transform=ax.transAxes,
-        fontsize=7.7,
-        color="#66788A",
-        linespacing=1.3,
+      ax.set_title(
+        panel.title,
+        loc="left",
+        fontsize=19 if comparison else 12.5,
+        pad=16 if comparison else 36,
       )
+      if not comparison:
+        ax.text(
+          0,
+          1.035,
+          panel.caption,
+          transform=ax.transAxes,
+          fontsize=7.7,
+          color="#66788A",
+          linespacing=1.3,
+        )
       positive, missing, excluded, endpoints = [], [], [], []
       for run in runs:
         color = summary["colors"][run.name]
@@ -713,11 +752,11 @@ def render_figure(runs: list[Run], curves: dict, summary: dict, title: str) -> F
           ax.plot(
             *line_points(curve, values),
             color=color,
-            lw=1.8,
+            lw=2.6 if comparison else 1.8,
             linestyle=linestyle,
             label=label or "_nolegend_",
           )
-          if valid.any():
+          if valid.any() and not comparison:
             last = int(np.flatnonzero(valid)[-1])
             ax.plot(curve.x[last], values[last], "o", color=color, ms=3.5)
             endpoints.append((values[last], curve.x[last], color))
@@ -765,13 +804,17 @@ def render_figure(runs: list[Run], curves: dict, summary: dict, title: str) -> F
           0.03,
           "\n".join(messages),
           transform=ax.transAxes,
-          fontsize=8,
+          fontsize=12 if comparison else 8,
           color="#66788A",
         )
       if (
         len(panel.tags) > 1 or panel.tags == (FAILURE,)
       ) and ax.get_legend_handles_labels()[0]:
-        ax.legend(loc="best", fontsize=8)
+        ax.legend(
+          loc="lower right" if comparison else "best",
+          bbox_to_anchor=(1, 0.14) if comparison else None,
+          fontsize=12 if comparison else 8,
+        )
       ax.set_xlabel(AXES[axis])
       ax.set_ylabel(panel.ylabel)
       ax.set_axisbelow(True)
@@ -784,17 +827,14 @@ def render_figure(runs: list[Run], curves: dict, summary: dict, title: str) -> F
         ax.set_xlim(0, max(xmax * 1.04, 1e-6))
         if axis == "iteration":
           ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
+    if comparison:
+      return fig
     footer = [
       f"Faint: logged values | Bold: trailing {summary['smooth_window']}-record mean"
       " | Actor LR unsmoothed | No smoothing across gaps",
       "Reward/length already average recent completed episodes. "
       "Endpoint labels show displayed values.",
     ]
-    if summary["report"] == "comparison":
-      footer.append(
-        "Failure windows differ: PPO cumulative synchronized outcomes; "
-        "SuperMimic last 100 episodes on logging rank. Initial unobserved outcomes are gaps."
-      )
     for run in runs:
       records = [s for tag in METRIC_TAGS for s in metric_records(run, tag)]
       footer.append(
@@ -868,10 +908,10 @@ def generate_reports(
           "Time = collection + learning, including logged compilation; "
           "excludes setup, initial collection, saving and downtime."
         )
-      heading = (
-        "training efficiency" if report == "comparison" else "SuperMimic diagnostics"
+      figure_title = (
+        title if report == "comparison" else f"{title} | SuperMimic diagnostics"
       )
-      figure = render_figure(selected, curves, summary, f"{title} | {heading}")
+      figure = render_figure(selected, curves, summary, figure_title)
       stem = f"{report}_{axis}"
       figure.savefig(output / f"{stem}.png", dpi=180)
       plt.close(figure)

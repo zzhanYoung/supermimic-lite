@@ -11,12 +11,14 @@ The experiment uses 40 retargeted G1 motion clips at 50 Hz:
 - **SuperMimic Lite:** 1 × NVIDIA L40S, **4,096 environments**.
 - **PPO baseline:** 8 × NVIDIA RTX 4090, **8,192 environments per GPU** (65,536 total).
 
-The archived full-motion evaluation starts each clip at frame zero with seed 42. A motion succeeds when it reaches the end without a failure termination.
+The full-motion evaluations below were completed on 2026-10-27 using 40 parallel environments, starting each clip at frame zero with seed 42. Both methods use the same evaluation protocol, with randomization and reset, observation and action noise disabled. A motion succeeds when it reaches the end without a failure termination.
 
-| Method | Checkpoint | Completed motions | Success rate |
-| --- | --- | ---: | ---: |
-| PPO | `model_39999.pt` | 24/40 | 60.0% |
-| **SuperMimic Lite** | `model_5000.pt` | **33/40** | **82.5%** |
+| Method | Checkpoint | Logged training time | Real environment steps | Successful motions | Success rate |
+| --- | --- | ---: | ---: | ---: | ---: |
+| PPO | `model_39999.pt` | 814.9 min (13.58 h) | 62,914,560,000 | 24/40 | 60.0% |
+| **SuperMimic Lite** | `model_13500.pt` | **211.5 min (3.52 h)** | **138,371,072** | **39/40** | **97.5%** |
+
+The plotted runs stop at these evaluated checkpoints: 40,000 PPO updates and 13,500 SuperMimic updates. Real environment steps count simulator transitions across all environments and GPUs; SuperMimic's count includes initial collection and excludes imagined rollouts. SuperMimic's mean motion completion is 97.61%, with `fallAndGetUp1_subject1` the only failed clip.
 
 ![LAFAN1 training curves against logged training time](docs/results/lafan1_train-time.png)
 
@@ -119,6 +121,8 @@ Plot a training run:
 ```bash
 uv run --no-sync supermimic plot --source /path/to/run --output-dir logs/plots
 ```
+
+Comparison plots use four panels for reward, episode length, failure fraction and body position error. Their legends include logged training time and real environment steps when available. A JSON source can set `max_iteration` to the last included zero-based iteration; for SuperMimic `model_N.pt`, use `N - 1` to align curves with that checkpoint.
 
 ## License and attribution
 
