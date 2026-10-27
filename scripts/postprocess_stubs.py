@@ -5,15 +5,14 @@ kinds of machine-specific output:
 
 1. The active OpenGL backend is baked in: ``mujoco.cgl`` on macOS,
    ``mujoco.glfw`` on Linux (or ``mujoco.egl`` / ``mujoco.osmesa`` depending on
-   ``MUJOCO_GL``). mjlab does not type-check against the rendering backend, so we
+   ``MUJOCO_GL``). SuperMimic does not type-check the rendering backend, so we
    drop those stubs and the ``__init__.pyi`` imports referencing them.
 2. Absolute install paths and live object reprs (memory addresses) are embedded
    as default values and ``# value = ...`` comments. These vary by machine and
    run, so we strip them.
 
-What remains is a deterministic set of physics-binding stubs that is identical
-on every platform, which lets CI regenerate them and fail if they drift from the
-installed mujoco version.
+The remaining physics-binding declarations are generated locally for type checks
+against the installed MuJoCo version; they are not committed or distributed.
 """
 
 from __future__ import annotations
@@ -22,14 +21,14 @@ import re
 import shutil
 from pathlib import Path
 
-STUB_DIR = Path(__file__).parent / "mujoco"
+STUB_DIR = Path(__file__).resolve().parents[1] / "typings" / "mujoco"
 
 # OpenGL context backends mujoco may expose, only one of which exists per
 # platform / MUJOCO_GL setting.
 BACKENDS = ("cgl", "egl", "glfw", "glx", "osmesa")
 
 # Backend modules plus the rendering stubs that import them. None are needed to
-# type-check mjlab, and all are platform-specific, so remove them entirely.
+# type-check SuperMimic, and all are platform-specific, so remove them entirely.
 REMOVE = (*BACKENDS, "gl_context.pyi", "renderer.pyi", "rendering")
 
 # Backend imports in __init__.pyi, e.g. "from mujoco.cgl import GLContext" and

@@ -82,7 +82,11 @@ def parse_config(
   parser.add_argument("--run-dir", type=Path)
   parser.add_argument("--motion-folder", type=Path)
   parser.add_argument("--output-dir", type=Path)
-  parser.add_argument("--max-iterations", type=int)
+  parser.add_argument(
+    "--max-iterations",
+    type=int,
+    help=f"Total learner iteration target (default: {SuperMimicRunnerCfg().max_iterations}).",
+  )
   parser.add_argument("--device", help="cpu or cuda:N; use --gpu-ids for multiple GPUs")
   parser.add_argument("--help-full", action="store_true")
   options, advanced = parser.parse_known_args(argv)

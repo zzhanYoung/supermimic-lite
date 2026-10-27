@@ -19,12 +19,11 @@ def main(argv: list[str] | None = None) -> int:
     "play": "play",
     "plot": "plot",
     "data": "data",
-    "doctor": "doctor",
   }
   if not args or args[0] in ("-h", "--help"):
     print(
       "Usage: supermimic [--asset-config FILE] <command> [options]\n\n"
-      "Commands: train, eval, play, plot, data, doctor\n"
+      "Commands: train, eval, play, plot, data\n"
       "Run supermimic <command> --help for command options."
     )
     return 0

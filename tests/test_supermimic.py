@@ -51,7 +51,7 @@ def test_supermimic_task_preserves_general_tracker_contract(play: bool) -> None:
   agent = load_rl_cfg(TASK)
   assert isinstance(agent, SuperMimicRunnerCfg)
   agent.validate()
-  assert agent.max_iterations == 320_000
+  assert agent.max_iterations == 10_000
   assert agent.world_model.window_length == 8
   assert agent.imagination.horizon == 32
   assert agent.imagination.optimizer.betas == (0.9, 0.95)

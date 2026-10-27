@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, cast
 
@@ -224,7 +224,9 @@ def main(*, assets=None) -> None:
   for name in ("output_file", "output_dir"):
     value = getattr(cfg, name)
     if value is not None:
-      setattr(cfg, name, assets.protect_output(value, cfg.input_file, cfg.input_dir))
+      cfg = replace(
+        cfg, **{name: assets.protect_output(value, cfg.input_file, cfg.input_dir)}
+      )
   # Small per-motion resampling operations do not benefit from many CPU threads.
   torch.set_num_threads(min(4, torch.get_num_threads()))
   convert_csv(cfg)

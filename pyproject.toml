@@ -6,7 +6,7 @@ build-backend = "uv_build"
 name = "supermimic-lite"
 version = "0.1.0"
 license = "Apache-2.0"
-license-files = ["LICENSE", "NOTICE.md"]
+license-files = ["LICENSE", "README.md"]
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [
   {name = "SuperMimic Lite contributors"},
@@ -26,7 +26,7 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Natural Language :: English",
 ]
-description = "Standalone SuperMimic motion tracking for Unitree G1, powered by mjlab."
+description = "Unofficial SuperMimic reproduction for Unitree G1, with basic LAFAN1 testing."
 requires-python = ">=3.11,<3.14"
 dependencies = [
   "mjlab @ git+https://github.com/mujocolab/mjlab.git@b517e0c489139e7fcee95702cfb2b01931264985",
@@ -59,13 +59,14 @@ supermimic = "supermimic.cli:main"
 
 [tool.uv.build-backend]
 module-name = "supermimic"
-source-include = ["uv.lock", "docs/**", "tests/**", "typings/**", "Makefile", "assets.example.toml", ".python-version"]
+source-include = ["uv.lock", "docs/results/lafan1_train-time.png", "tests/**", "scripts/**", "Makefile", "assets.example.toml", ".python-version"]
 
 [dependency-groups]
 dev = [
   "ipdb>=0.13.13",
   "pre-commit>=4.3.0",
   "pyright>=1.1.408",
+  "pybind11-stubgen==2.5.5",
   "onnxruntime>=1.19.0; python_version >= '3.11'",
   "pytest>=v9.0.3",
   "ruff>=0.16.1",

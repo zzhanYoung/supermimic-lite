@@ -47,7 +47,7 @@ class SuperMimicRunnerCfg(RslRlBaseRunnerCfg):
   class_name: str = "SuperMimicRunner"
   experiment_name: str = "g1_supermimic"
   logger: Literal["wandb", "tensorboard"] = "tensorboard"
-  max_iterations: int = 320_000
+  max_iterations: int = 10_000
   num_steps_per_env: int = 0
   """Must be zero: collection is scheduled by update_to_data_ratio."""
   initial_collection_steps: int = 32

@@ -1,14 +1,13 @@
-"""Validate or convert motion data, and inventory preserved experiment assets."""
+"""Convert or view motion data, and inventory preserved experiment assets."""
 
 from __future__ import annotations
 
 import argparse
 import importlib
-import json
 import sys
 from pathlib import Path
 
-from supermimic.assets import DEFAULT_ASSETS, LocalAssets, require_path, write_inventory
+from supermimic.assets import DEFAULT_ASSETS, LocalAssets, write_inventory
 
 
 def main(argv: list[str] | None = None, *, assets: LocalAssets = DEFAULT_ASSETS) -> int:
@@ -34,33 +33,14 @@ def main(argv: list[str] | None = None, *, assets: LocalAssets = DEFAULT_ASSETS)
     epilog="Converters/viewers: data csv, data qpos, data play-npz, data play-bvh",
   )
   subs = parser.add_subparsers(dest="command", required=True)
-  check = subs.add_parser("check")
-  check.add_argument("--motion-folder", type=Path, default=assets.motion_folder)
   listing = subs.add_parser("inventory")
   listing.add_argument("--output", type=Path, default=Path("logs/asset-inventory.json"))
   parsed = parser.parse_args(args)
-  if parsed.command == "check":
-    from supermimic.cli.evaluate import scan_motions
-
-    folder = require_path(parsed.motion_folder, "--motion-folder", directory=True)
-    motions = scan_motions(folder)
-    print(
-      json.dumps(
-        {
-          "count": len(motions),
-          "frames": sum(m["frames"] for m in motions),
-          "fps": 50.0,
-          "motions": [m["name"] for m in motions],
-        },
-        indent=2,
-      )
-    )
-  else:
-    roots = {p.name: p for p in assets.protected_roots}
-    if not roots:
-      raise ValueError("Configure protected_roots to inventory preserved assets.")
-    output = assets.protect_output(parsed.output)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    write_inventory(output, roots)
-    print(output)
+  roots = {p.name: p for p in assets.protected_roots}
+  if not roots:
+    raise ValueError("Configure protected_roots to inventory preserved assets.")
+  output = assets.protect_output(parsed.output)
+  output.parent.mkdir(parents=True, exist_ok=True)
+  write_inventory(output, roots)
+  print(output)
   return 0
