@@ -126,7 +126,7 @@ Comparison plots use four panels for reward, episode length, failure fraction an
 
 ## License and attribution
 
-Code is licensed under [Apache-2.0](LICENSE). SuperMimic Lite is an unofficial reproduction; the original work is credited to the SuperMimic authors.
+Code is licensed under [Apache-2.0](LICENSE) and maintained by [zzhanYoung](https://github.com/zzhanYoung). SuperMimic Lite is an unofficial reproduction; the original work is credited to the SuperMimic authors.
 
 Task configuration, motion utilities and the environment step implementation derive in part from mjlab, maintained by the MuJoCo Lab contributors under Apache-2.0. The framework and robot assets are installed from official upstream. MuJoCo type-declaration generators are retained in `scripts/`; their generated `typings/` output is local development support, excluded from Git and release archives.
 
